@@ -407,6 +407,7 @@ class ItemRepository(Repository):
             stmt = delete(OrderItem).where(OrderItem.order_id == order_id)
             result = self.session.execute(stmt)
             self.session.commit()
+
             return result.rowcount > 0
 
         except Exception as e:
@@ -436,6 +437,32 @@ class OrderRepository(Repository):
         except Exception as e:
             self.session.rollback()
             raise e
+
+
+    def get_cart(self, user_id: int):
+        cart = self.session.query(Orders).filter(
+            and_(
+                    Orders.user_id == user_id,
+                    Orders.status == "unconfirmed"
+                 )
+        ).first()
+
+        return cart
+
+    def create_order(self, order_id: int, delivery_method: str, address: str):
+        try:
+            order = self.session.query(Orders).filter(Orders.id == order_id).first()
+            if order:
+                order.status = "confirmed"
+                order.delivery_method = delivery_method
+                order.address = address
+                self.session.commit()
+            return order
+
+        except Exception as e:
+            self.session.rollback()
+            raise e
+
 
     def get_order_by_id(self, order_id: int) -> Optional[Orders]:
         order = (
@@ -470,19 +497,6 @@ class OrderRepository(Repository):
         orders = query.offset(offset).limit(limit).all()
 
         return orders, total_count
-
-    def update_cart_to_order(self, order_id: int, status: str, delivery_method: str, address: str) -> Optional[Orders]:
-        try:
-            order = self.session.query(Orders).filter(Orders.id == order_id).first()
-            if order:
-                order.status = status
-                order.delivery_method = delivery_method
-                order.address = address
-                self.session.commit()
-            return order
-        except Exception as e:
-            self.session.rollback()
-            raise e
 
     def delete_order(self, order_id: int) -> bool:
         try:

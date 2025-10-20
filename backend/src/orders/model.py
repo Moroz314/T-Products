@@ -18,10 +18,6 @@ class DeliveryMethod(str, Enum):
 class OrderStatus(str, Enum):
     UNCONFIRMED = 'unconfirmed'
     CONFIRMED = 'confirmed'
-    PROCESSING = 'processing'
-    SHIPPED = 'shipped'
-    DELIVERED = 'delivered'
-    CANCELLED = 'cancelled'
 
 class OrderCreateRequest(BaseModel):
     address: str
@@ -107,8 +103,7 @@ class OrderCreateData(BaseModel):
     delivery_method: DeliveryMethod = None
     status: str = "unconfirmed"
 
-class OrderInfo(BaseModel):
-    order_id: int
+class OrderCreateInfo(BaseModel):
     address: str = None
     delivery_method: DeliveryMethod
     status: str

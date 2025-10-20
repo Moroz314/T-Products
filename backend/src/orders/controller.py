@@ -86,7 +86,7 @@ def get_order(
 
 @orders_router.get(
     "/cart",
-    response_model=CartResponse,  # Изменено с OrderResponse на CartDetailResponse
+    response_model=CartResponse,
     summary="Получить корзину",
     description="Возвращает текущую корзину пользователя"
 )
@@ -113,7 +113,7 @@ def cart_create(
     description="Переводит корзину в состояние заказа"
 )
 def create_order_from_cart(
-    request: OrderInfo,
+    request: OrderCreateInfo,
     order_service: OrderService = Depends(get_order_service)
 ) -> OrderResponse:
     return order_service.create_order(request)

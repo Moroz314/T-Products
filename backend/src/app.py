@@ -4,10 +4,23 @@ from .database.models import Base
 from .routers import register_routers
 import uvicorn
 from .fill import populate_database
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
-Base.metadata.drop_all(bind=engine)
+origins = [
+    "http://localhost",
+    "http://127.0.0.1",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 Base.metadata.create_all(bind=engine)
 populate_database()
 

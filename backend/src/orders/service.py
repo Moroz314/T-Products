@@ -1,5 +1,4 @@
 from starlette.responses import JSONResponse
-
 from ..database.repository import *
 from fastapi import HTTPException, status
 from .model import *
@@ -115,9 +114,7 @@ class OrderItemService:
             )
 
     def remove_item_from_order(self, item_id: int) -> OrderItemDeleteResponse:
-        """Удалить товар из заказа"""
         try:
-            # Проверяем существование элемента
             item = self.item_repo.get_item_by_id(item_id)
             if not item:
                 raise HTTPException(
@@ -125,9 +122,8 @@ class OrderItemService:
                     detail=f"Элемент заказа с ID {item_id} не найден"
                 )
 
-            self.check_order(item.order_id)
+            self.check_order(item.order_id) # проверяем что товар
 
-            # Удаляем товар
             success = self.item_repo.delete_item(item_id)
 
             if not success:
@@ -234,19 +230,20 @@ class OrderService:
                 detail=f"Ошибка при создании заказа: {str(e)}"
             )
 
-    def create_order(self, request: OrderInfo) -> OrderResponse:
-        order = self.order_repo.get_order_by_id(request.order_id)
+    def create_order(self, request: OrderCreateInfo) -> OrderResponse:
+        cart = self.order_repo.get_cart(self.user_id)
 
-        self.check_order_found(order)
-        self.check_order_privileges(order, self.user_id)
+        # проверки на принадлежность и существование корзины
+        self.check_order_found(cart)
+        self.check_order_privileges(cart, self.user_id)
 
-        self.order_repo.update_cart_to_order(request.order_id, delivery_method=request.delivery_method,
-                                             status=request.status,
-                                             address=request.address)
+        order = self.order_repo.create_order(
+            cart.id,
+            delivery_method=request.delivery_method,
+            address=request.address
+        )
 
-        # Получаем обновленный заказ
-        updated_order = self.order_repo.get_order_by_id(request.order_id)
-        return self._format_order_response(updated_order)
+        return self._format_order_response(order)
 
     def get_order(self, order_id: int) -> OrderDetailResponse:
         try:
