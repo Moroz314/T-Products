@@ -1,0 +1,57 @@
+services:
+  postgres:
+    image: postgres:latest
+    container_name: psgr
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=12345
+      - POSTGRES_DB=data
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+    ports:
+      - "5432:5432"
+    networks:
+      - hackaton_net
+
+  adminer:
+    image: adminer
+    container_name: adminer
+    ports:
+      - "127.0.0.1:8080:8080"
+    links:
+      - "postgres:db"
+    networks:
+      - hackaton_net
+    depends_on:
+      - postgres
+
+  frontend:
+    image: prod_frontend
+    container_name: frontend
+    ports:
+      - "80:5173"
+    networks:
+      - hackaton_net
+
+  backend:
+    image: prod_backend
+    container_name: backend_container
+    ports:
+      - "127.0.0.1:8000:8000"
+    networks:
+      - hackaton_net
+    depends_on:
+      - postgres
+
+    links:
+      - "postgres:dbps"
+
+
+networks:
+  hackaton_net:
+    driver: bridge
+
+volumes:
+  postgres-data:
+

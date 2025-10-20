@@ -1,0 +1,1442 @@
+openapi: 3.1.0
+info:
+  title: FastAPI
+  version: 0.1.0
+paths:
+  /user/register:
+    post:
+      summary: Регистрация пользователя
+      operationId: register_user_user_register_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserTokenAnswer'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /user/sign_in:
+    post:
+      summary: Аутентификация пользователя
+      operationId: sign_in_user_user_sign_in_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserSignIn'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserTokenAnswer'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /merchant/register:
+    post:
+      summary: Регистрация продавца
+      operationId: register_merchant_merchant_register_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Merchant'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MerchantTokenAnswer'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /merchant/sign_in:
+    post:
+      summary: Аутентификация продавца
+      operationId: sign_in_merchant_merchant_sign_in_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MerchantSignIn'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MerchantTokenAnswer'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /merchant/add/product/stock/{stock_id}:
+    post:
+      summary: Регистрация товара поставщиком
+      description: Поставщик отправляет товар на склад
+      operationId: add_product_to_stock_merchant_add_product_stock__stock_id__post
+      security:
+        - OAuth2PasswordBearer: []
+      parameters:
+        - name: stock_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            title: Stock Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductToStock'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /products/feed:
+    get:
+      summary: Получить ленту товаров
+      description: Возвращает отфильтрованную и отсортированную ленту товаров с предложениями
+      operationId: get_products_feed_products_feed_get
+      parameters:
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            description: Смещение для пагинации
+            default: 0
+            title: Offset
+          description: Смещение для пагинации
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            maximum: 100
+            minimum: 1
+            description: Лимит товаров на странице
+            default: 20
+            title: Limit
+          description: Лимит товаров на странице
+        - name: search
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: null
+            description: Поисковый запрос
+            title: Search
+          description: Поисковый запрос
+        - name: category
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: null
+            description: Фильтр по категории
+            title: Category
+          description: Фильтр по категории
+        - name: merchant_ids
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: null
+            description: Список ID магазинов через запятую
+            title: Merchant Ids
+          description: Список ID магазинов через запятую
+        - name: sort_by
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/SortOptions'
+            description: Поле для сортировки
+            default: price
+          description: Поле для сортировки
+        - name: user_lat
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: number
+              - type: null
+            description: Широта пользователя
+            title: User Lat
+          description: Широта пользователя
+        - name: user_long
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: number
+              - type: null
+            description: Долгота пользователя
+            title: User Long
+          description: Долгота пользователя
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductFeedResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /products/categories:
+    get:
+      summary: Получить список категорий
+      description: Возвращает все доступные категории товаров
+      operationId: get_categories_products_categories_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoriesListResponse'
+  /products/merchants:
+    get:
+      summary: Получить список магазинов
+      description: Возвращает всех мерчантов/магазинов
+      operationId: get_merchants_products_merchants_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MerchantsListResponse'
+  /products/{ean}/offers:
+    get:
+      summary: Получить предложения для товара
+      description: Возвращает все предложения для конкретного товара с ценами и расстояниями
+      operationId: get_product_offers_products__ean__offers_get
+      parameters:
+        - name: ean
+          in: path
+          required: true
+          schema:
+            type: integer
+            title: Ean
+        - name: user_lat
+          in: query
+          required: true
+          schema:
+            type: number
+            description: Широта пользователя
+            title: User Lat
+          description: Широта пользователя
+          example: 55.7558
+        - name: user_long
+          in: query
+          required: true
+          schema:
+            type: number
+            description: Долгота пользователя
+            title: User Long
+          description: Долгота пользователя
+          example: 37.6173
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductOffersListResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /products/search:
+    get:
+      summary: Поиск товаров
+      description: Поиск товаров по названию или категории
+      operationId: search_products_products_search_get
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            description: Поисковый запрос
+            title: Q
+          description: Поисковый запрос
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            description: Смещение для пагинации
+            default: 0
+            title: Offset
+          description: Смещение для пагинации
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            maximum: 100
+            minimum: 1
+            description: Лимит товаров на странице
+            default: 20
+            title: Limit
+          description: Лимит товаров на странице
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductFeedResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /orders/{order_id}/items:
+    post:
+      summary: Добавить товар в заказ
+      description: Добавляет товар в указанный заказ
+      operationId: add_item_to_order_orders__order_id__items_post
+      security:
+        - OAuth2PasswordBearer: []
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            title: Order Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderItemCreateRequest'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderItemCreateResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    get:
+      summary: Получить товары заказа
+      description: Возвращает список всех товаров в указанном заказе
+      operationId: get_order_items_orders__order_id__items_get
+      security:
+        - OAuth2PasswordBearer: []
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            title: Order Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderItemsListResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /order-items/{item_id}:
+    put:
+      summary: Обновить количество товара
+      description: Обновляет количество товара в позиции заказа
+      operationId: update_order_item_order_items__item_id__put
+      security:
+        - OAuth2PasswordBearer: []
+      parameters:
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            title: Item Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderItemUpdateRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderItemUpdateResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      summary: Удалить товар из заказа
+      description: Удаляет товар из заказа по ID позиции
+      operationId: remove_order_item_order_items__item_id__delete
+      security:
+        - OAuth2PasswordBearer: []
+      parameters:
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            title: Item Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderItemDeleteResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /orders:
+    post:
+      summary: Создать заказ
+      description: Создает новый заказ для текущего пользователя
+      operationId: create_order_orders_post
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderCreateResponse'
+      security:
+        - OAuth2PasswordBearer: []
+  /orders/{order_id}:
+    get:
+      summary: Получить информацию о заказе
+      description: Возвращает детальную информацию о конкретном заказе
+      operationId: get_order_orders__order_id__get
+      security:
+        - OAuth2PasswordBearer: []
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            title: Order Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDetailResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      summary: Удалить заказ
+      description: Полностью удаляет заказ и все его товары
+      operationId: delete_order_orders__order_id__delete
+      security:
+        - OAuth2PasswordBearer: []
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            title: Order Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDeleteResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /cart:
+    get:
+      summary: Получить корзину
+      description: Возвращает текущую корзину пользователя
+      operationId: get_cart_cart_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartResponse'
+      security:
+        - OAuth2PasswordBearer: []
+    post:
+      summary: Создание корзины
+      description: Создаёт пустую корзину пользователю
+      operationId: cart_create_cart_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderCreateResponse'
+      security:
+        - OAuth2PasswordBearer: []
+  /order:
+    post:
+      summary: Оформление заказа
+      description: Переводит корзину в состояние заказа
+      operationId: create_order_from_cart_order_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderInfo'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+        - OAuth2PasswordBearer: []
+  /users/orders:
+    get:
+      summary: Получить историю заказов
+      description: Возвращает историю заказов пользователя с пагинацией
+      operationId: get_user_orders_users_orders_get
+      security:
+        - OAuth2PasswordBearer: []
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 50
+            title: Limit
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+            title: Offset
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrdersListResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+components:
+  schemas:
+    CartResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        user_id:
+          type: integer
+          title: User Id
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        items:
+          items:
+            $ref: '#/components/schemas/OrderItemResponse'
+          type: array
+          title: Items
+        total_amount:
+          type: number
+          title: Total Amount
+        total_items:
+          type: integer
+          title: Total Items
+      type: object
+      required:
+        - id
+        - user_id
+        - created_at
+        - items
+        - total_amount
+        - total_items
+      title: CartResponse
+    CategoriesListResponse:
+      properties:
+        status:
+          type: string
+          title: Status
+          default: success
+        message:
+          type: string
+          title: Message
+        data:
+          $ref: '#/components/schemas/CategoriesResponse'
+      type: object
+      required:
+        - message
+        - data
+      title: CategoriesListResponse
+    CategoriesResponse:
+      properties:
+        categories:
+          items:
+            type: string
+          type: array
+          title: Categories
+      type: object
+      required:
+        - categories
+      title: CategoriesResponse
+    DeliveryMethod:
+      type: string
+      enum:
+        - courier
+        - pickup
+      title: DeliveryMethod
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    Merchant:
+      properties:
+        name:
+          type: string
+          title: Name
+        email:
+          type: string
+          title: Email
+        password:
+          type: string
+          title: Password
+      type: object
+      required:
+        - name
+        - email
+        - password
+      title: Merchant
+    MerchantSignIn:
+      properties:
+        email:
+          type: string
+          title: Email
+        password:
+          type: string
+          title: Password
+      type: object
+      required:
+        - email
+        - password
+      title: MerchantSignIn
+    MerchantTokenAnswer:
+      properties:
+        access_token:
+          type: string
+          title: Access Token
+        merchant_id:
+          type: integer
+          title: Merchant Id
+      type: object
+      required:
+        - access_token
+        - merchant_id
+      title: MerchantTokenAnswer
+    MerchantsListResponse:
+      properties:
+        status:
+          type: string
+          title: Status
+          default: success
+        message:
+          type: string
+          title: Message
+        data:
+          $ref: '#/components/schemas/MerchantsResponse'
+      type: object
+      required:
+        - message
+        - data
+      title: MerchantsListResponse
+    MerchantsResponse:
+      properties:
+        merchants:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Merchants
+      type: object
+      required:
+        - merchants
+      title: MerchantsResponse
+    OrderCreateData:
+      properties:
+        order_id:
+          type: integer
+          title: Order Id
+        user_id:
+          type: integer
+          title: User Id
+        address:
+          type: string
+          title: Address
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        delivery_method:
+          $ref: '#/components/schemas/DeliveryMethod'
+        status:
+          type: string
+          title: Status
+          default: unconfirmed
+      type: object
+      required:
+        - order_id
+        - user_id
+        - created_at
+      title: OrderCreateData
+    OrderCreateResponse:
+      properties:
+        status:
+          type: string
+          title: Status
+          default: success
+        message:
+          type: string
+          title: Message
+        data:
+          $ref: '#/components/schemas/OrderCreateData'
+      type: object
+      required:
+        - message
+        - data
+      title: OrderCreateResponse
+    OrderDeleteResponse:
+      properties:
+        status:
+          type: string
+          title: Status
+          default: success
+        message:
+          type: string
+          title: Message
+      type: object
+      required:
+        - message
+      title: OrderDeleteResponse
+    OrderDetailResponse:
+      properties:
+        status:
+          type: string
+          title: Status
+          default: success
+        message:
+          type: string
+          title: Message
+        data:
+          additionalProperties:
+            $ref: '#/components/schemas/OrderResponse'
+          type: object
+          title: Data
+      type: object
+      required:
+        - message
+        - data
+      title: OrderDetailResponse
+    OrderInfo:
+      properties:
+        order_id:
+          type: integer
+          title: Order Id
+        address:
+          type: string
+          title: Address
+        delivery_method:
+          $ref: '#/components/schemas/DeliveryMethod'
+        status:
+          type: string
+          title: Status
+      type: object
+      required:
+        - order_id
+        - delivery_method
+        - status
+      title: OrderInfo
+    OrderItemCreateRequest:
+      properties:
+        sku_id:
+          type: integer
+          title: Sku Id
+        quantity:
+          type: integer
+          title: Quantity
+      type: object
+      required:
+        - sku_id
+        - quantity
+      title: OrderItemCreateRequest
+    OrderItemCreateResponse:
+      properties:
+        status:
+          type: string
+          title: Status
+          default: success
+        message:
+          type: string
+          title: Message
+        data:
+          $ref: '#/components/schemas/OrderItemData'
+      type: object
+      required:
+        - message
+        - data
+      title: OrderItemCreateResponse
+    OrderItemData:
+      properties:
+        item_id:
+          type: integer
+          title: Item Id
+        order_id:
+          type: integer
+          title: Order Id
+        sku_id:
+          type: integer
+          title: Sku Id
+        quantity:
+          type: integer
+          title: Quantity
+      type: object
+      required:
+        - item_id
+        - order_id
+        - sku_id
+        - quantity
+      title: OrderItemData
+    OrderItemDeleteResponse:
+      properties:
+        status:
+          type: string
+          title: Status
+          default: success
+        message:
+          type: string
+          title: Message
+      type: object
+      required:
+        - message
+      title: OrderItemDeleteResponse
+    OrderItemResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        order_id:
+          type: integer
+          title: Order Id
+        sku_id:
+          type: integer
+          title: Sku Id
+        quantity:
+          type: integer
+          title: Quantity
+        product_name:
+          type: string
+          title: Product Name
+        price:
+          type: number
+          title: Price
+        merchant_name:
+          type: string
+          title: Merchant Name
+        total_price:
+          type: number
+          title: Total Price
+      type: object
+      required:
+        - id
+        - order_id
+        - sku_id
+        - quantity
+        - product_name
+        - price
+        - merchant_name
+        - total_price
+      title: OrderItemResponse
+    OrderItemUpdateData:
+      properties:
+        item_id:
+          type: integer
+          title: Item Id
+        quantity:
+          type: integer
+          title: Quantity
+      type: object
+      required:
+        - item_id
+        - quantity
+      title: OrderItemUpdateData
+    OrderItemUpdateRequest:
+      properties:
+        quantity:
+          type: integer
+          title: Quantity
+      type: object
+      required:
+        - quantity
+      title: OrderItemUpdateRequest
+    OrderItemUpdateResponse:
+      properties:
+        status:
+          type: string
+          title: Status
+          default: success
+        message:
+          type: string
+          title: Message
+        data:
+          $ref: '#/components/schemas/OrderItemUpdateData'
+      type: object
+      required:
+        - message
+        - data
+      title: OrderItemUpdateResponse
+    OrderItemsData:
+      properties:
+        order_id:
+          type: integer
+          title: Order Id
+        items:
+          items:
+            $ref: '#/components/schemas/OrderItemResponse'
+          type: array
+          title: Items
+        total_amount:
+          type: number
+          title: Total Amount
+        total_items:
+          type: integer
+          title: Total Items
+      type: object
+      required:
+        - order_id
+        - items
+        - total_amount
+        - total_items
+      title: OrderItemsData
+    OrderItemsListResponse:
+      properties:
+        status:
+          type: string
+          title: Status
+          default: success
+        message:
+          type: string
+          title: Message
+        data:
+          $ref: '#/components/schemas/OrderItemsData'
+      type: object
+      required:
+        - message
+        - data
+      title: OrderItemsListResponse
+    OrderListData-Input:
+      properties:
+        orders:
+          items:
+            $ref: '#/components/schemas/OrderResponse'
+          type: array
+          title: Orders
+        total_count:
+          type: integer
+          title: Total Count
+        limit:
+          type: integer
+          title: Limit
+        offset:
+          type: integer
+          title: Offset
+      type: object
+      required:
+        - orders
+        - total_count
+        - limit
+        - offset
+      title: OrderListData
+    OrderListData-Output:
+      properties:
+        orders:
+          items:
+            $ref: '#/components/schemas/OrderResponse'
+          type: array
+          title: Orders
+        total_count:
+          type: integer
+          title: Total Count
+        limit:
+          type: integer
+          title: Limit
+        offset:
+          type: integer
+          title: Offset
+      type: object
+      required:
+        - orders
+        - total_count
+        - limit
+        - offset
+      title: OrderListData
+    OrderResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        user_id:
+          type: integer
+          title: User Id
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        delivery_method:
+          type: string
+          title: Delivery Method
+        address:
+          type: string
+          title: Address
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        items:
+          items:
+            $ref: '#/components/schemas/OrderItemResponse'
+          type: array
+          title: Items
+        total_amount:
+          type: number
+          title: Total Amount
+        total_items:
+          type: integer
+          title: Total Items
+      type: object
+      required:
+        - id
+        - user_id
+        - created_at
+        - delivery_method
+        - address
+        - status
+        - items
+        - total_amount
+        - total_items
+      title: OrderResponse
+    OrderStatus:
+      type: string
+      enum:
+        - unconfirmed
+        - confirmed
+        - processing
+        - shipped
+        - delivered
+        - cancelled
+      title: OrderStatus
+    OrdersListResponse:
+      properties:
+        status:
+          type: string
+          title: Status
+          default: success
+        message:
+          type: string
+          title: Message
+        data:
+          $ref: '#/components/schemas/OrderListData-Output'
+      type: object
+      required:
+        - message
+        - data
+      title: OrdersListResponse
+    ProductFeedData-Input:
+      properties:
+        products:
+          items:
+            $ref: '#/components/schemas/ProductFeedItem'
+          type: array
+          title: Products
+        total_count:
+          type: integer
+          title: Total Count
+        offset:
+          type: integer
+          title: Offset
+        limit:
+          type: integer
+          title: Limit
+      type: object
+      required:
+        - products
+        - total_count
+        - offset
+        - limit
+      title: ProductFeedData
+    ProductFeedData-Output:
+      properties:
+        products:
+          items:
+            $ref: '#/components/schemas/ProductFeedItem'
+          type: array
+          title: Products
+        total_count:
+          type: integer
+          title: Total Count
+        offset:
+          type: integer
+          title: Offset
+        limit:
+          type: integer
+          title: Limit
+      type: object
+      required:
+        - products
+        - total_count
+        - offset
+        - limit
+      title: ProductFeedData
+    ProductFeedItem:
+      properties:
+        ean:
+          type: integer
+          title: Ean
+        name:
+          type: string
+          title: Name
+        category:
+          type: string
+          title: Category
+        weight:
+          type: number
+          title: Weight
+        offers:
+          items:
+            $ref: '#/components/schemas/ProductOffer'
+          type: array
+          title: Offers
+        best_offer:
+          anyOf:
+            - $ref: '#/components/schemas/ProductOffer'
+            - type: null
+        min_price:
+          type: number
+          title: Min Price
+        max_price:
+          type: number
+          title: Max Price
+      type: object
+      required:
+        - ean
+        - name
+        - category
+        - weight
+        - offers
+        - min_price
+        - max_price
+      title: ProductFeedItem
+    ProductFeedResponse:
+      properties:
+        status:
+          type: string
+          title: Status
+          default: success
+        message:
+          type: string
+          title: Message
+        data:
+          $ref: '#/components/schemas/ProductFeedData-Output'
+      type: object
+      required:
+        - message
+        - data
+      title: ProductFeedResponse
+    ProductInfo:
+      properties:
+        ean:
+          type: integer
+          title: Ean
+        name:
+          type: string
+          title: Name
+        category:
+          type: string
+          title: Category
+      type: object
+      required:
+        - ean
+        - name
+        - category
+      title: ProductInfo
+    ProductOffer:
+      properties:
+        sku_id:
+          type: integer
+          title: Sku Id
+        price:
+          type: number
+          title: Price
+        amount:
+          type: integer
+          title: Amount
+        merchant_id:
+          type: integer
+          title: Merchant Id
+        merchant_name:
+          type: string
+          title: Merchant Name
+        stock_id:
+          type: integer
+          title: Stock Id
+        stock_address:
+          type: string
+          title: Stock Address
+        distance_km:
+          anyOf:
+            - type: number
+            - type: null
+          title: Distance Km
+        stock_lat:
+          type: number
+          title: Stock Lat
+        stock_long:
+          type: number
+          title: Stock Long
+      type: object
+      required:
+        - sku_id
+        - price
+        - amount
+        - merchant_id
+        - merchant_name
+        - stock_id
+        - stock_address
+        - stock_lat
+        - stock_long
+      title: ProductOffer
+    ProductOffersListResponse:
+      properties:
+        status:
+          type: string
+          title: Status
+          default: success
+        message:
+          type: string
+          title: Message
+        data:
+          $ref: '#/components/schemas/ProductOffersResponse'
+      type: object
+      required:
+        - message
+        - data
+      title: ProductOffersListResponse
+    ProductOffersResponse:
+      properties:
+        product:
+          $ref: '#/components/schemas/ProductInfo'
+        offers:
+          items:
+            $ref: '#/components/schemas/ProductOffer'
+          type: array
+          title: Offers
+        best_offer:
+          anyOf:
+            - $ref: '#/components/schemas/ProductOffer'
+            - type: null
+      type: object
+      required:
+        - product
+        - offers
+      title: ProductOffersResponse
+    ProductToStock:
+      properties:
+        product_ean:
+          type: string
+          title: Product Ean
+        price:
+          type: number
+          title: Price
+        amount:
+          type: integer
+          title: Amount
+      type: object
+      required:
+        - product_ean
+        - price
+        - amount
+      title: ProductToStock
+    SortOptions:
+      type: string
+      enum:
+        - price
+        - distance
+        - best_value
+      title: SortOptions
+    User:
+      properties:
+        username:
+          type: string
+          title: Username
+        email:
+          type: string
+          title: Email
+        password:
+          type: string
+          title: Password
+      type: object
+      required:
+        - username
+        - email
+        - password
+      title: User
+    UserSignIn:
+      properties:
+        email:
+          type: string
+          title: Email
+        password:
+          type: string
+          title: Password
+      type: object
+      required:
+        - email
+        - password
+      title: UserSignIn
+    UserTokenAnswer:
+      properties:
+        access_token:
+          type: string
+          title: Access Token
+        user_id:
+          type: integer
+          title: User Id
+      type: object
+      required:
+        - access_token
+        - user_id
+      title: UserTokenAnswer
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+              - type: string
+              - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+        - loc
+        - msg
+        - type
+      title: ValidationError
+  securitySchemes:
+    OAuth2PasswordBearer:
+      type: oauth2
+      flows:
+        password:
+          scopes: {}
+          tokenUrl: token

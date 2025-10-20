@@ -1,0 +1,13 @@
+fastapi
+httpx
+email-validator
+redis
+sqlalchemy
+pydantic
+psycopg2-binary
+python-jose
+uvicorn
+passlib
+python-dotenv
+bcrypt==4.3.0
+pytest

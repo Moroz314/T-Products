@@ -1,0 +1,98 @@
+stages:
+  - build
+  - test
+  - deploy
+
+.global-variables:
+  variables:
+    SSH_USER: "$ENV_SSH_USER"
+    SSH_HOST: "$ENV_SSH_HOST"
+    SSH_PRIVATE_KEY_BASE64: "$ENV_PRIVATE_KEY_BASE64"
+    BE_IMAGE_NAME: $CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHA
+    FE_IMAGE_NAME: $CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHA
+
+.ssh:
+  image: kroniak/ssh-client:3.19
+  variables:
+    SSH_ADDRESS: $SSH_USER@$SSH_HOST
+  before_script:
+    - mkdir -p ~/.ssh && chmod 700 ~/.ssh
+    - echo -e "Host * StrictHostKeyChecking no " > ~/.ssh/config && chmod 600 ~/.ssh/config
+    - ssh-keyscan -H $SSH_HOST >> ~/.ssh/known_hosts
+    - echo "$SSH_PRIVATE_KEY_BASE64" | base64 -d > ~/.ssh/id_rsa && chmod 400 ~/.ssh/id_rsa
+    - ssh-agent sh -c "ssh-add ~/.ssh/id_rsa"
+
+.rules-merge-or-master:
+  rules:
+    - if: $CI_COMMIT_REF_NAME == $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
+    - if: $CI_COMMIT_REF_NAME == "master"
+
+build:
+  extends:
+    - .rules-merge-or-master
+    - .global-variables
+  image:
+    name: gcr.io/kaniko-project/executor:v1.23.2-debug
+    entrypoint: [""]
+  stage: build
+  variables:
+    DOCKER_CONFIG: /kaniko/.docker
+    IMAGE_TAG: $CI_COMMIT_SHA
+    REGISTRY_USER: $CI_REGISTRY_USER
+    REGISTRY_PASSWORD: $CI_REGISTRY_PASSWORD
+    REGISTRY_URL: $CI_REGISTRY
+  script:
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$REGISTRY_USER\",\"password\":\"$REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+    - /kaniko/executor
+      --context "$CI_PROJECT_DIR/backend"
+      --dockerfile "$CI_PROJECT_DIR/backend/Dockerfile"
+      --destination "$BE_IMAGE_NAME"
+      --cache=true
+      --registry-mirror=dockerhub.timeweb.cloud
+    - /kaniko/executor
+      --context "$CI_PROJECT_DIR/frontend"
+      --dockerfile "$CI_PROJECT_DIR/frontend/Dockerfile"
+      --destination "$FE_IMAGE_NAME"
+      --cache=true
+      --registry-mirror=dockerhub.timeweb.cloud
+
+test:
+  stage: test
+  extends:
+    - .rules-merge-or-master
+  image: gcr.io/kaniko-project/executor:v1.23.2-debug
+
+  needs:
+    - build
+
+  script:
+    - pip install -r backend/src/requirements.txt
+    - pytest backend/tests/
+
+deploy:
+  stage: deploy
+  extends:
+    - .ssh
+    - .global-variables
+    - .rules-merge-or-master
+  variables:
+    DEPLOY_PATH: "/home/$SSH_USER/$CI_PROJECT_NAME"
+  needs:
+    - build
+  script:
+    - ssh $SSH_ADDRESS "mkdir -p $DEPLOY_PATH"
+    - scp ./compose.yml $SSH_ADDRESS:$DEPLOY_PATH/compose.yml
+    - |
+      ssh $SSH_ADDRESS "
+        cd $DEPLOY_PATH &&
+        echo '$CI_REGISTRY_PASSWORD' | docker login $CI_REGISTRY --username $CI_REGISTRY_USER --password-stdin &&
+        sed -i 's|image: prod_backend|image: $BE_IMAGE_NAME|g' compose.yml &&
+        sed -i 's|image: prod_frontend|image: $FE_IMAGE_NAME|g' compose.yml &&
+        sed -i 's|- "5173:5173"|- "80:5173"|g' compose.yml &&
+        docker compose pull &&
+        docker compose up -d --remove-orphans &&
+        docker system prune -af"
+  environment:
+    name: production
+    url: http://$SSH_HOST
