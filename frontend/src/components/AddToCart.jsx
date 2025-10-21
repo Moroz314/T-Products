@@ -7,19 +7,22 @@ export default function AddToCart({ product }) {
     const [quantity, setQuantity] = useState(1);
     const navigate = useNavigate();
     const [shet, setShet] = useState(0)
-    const [cors, setCors] = useState()
+    const [tov_to_corz, setTov_cors] = useState(false)
 
     // Функция для создания корзины через создание заказа
 
 
     const addToCart = (productId, prev) => {
-        const existingItem = prev.find(item => item._id === productId);
+
+
+        const existingItem = prev.find(item => item.sku_id === productId);
             if (existingItem) {
-                return prev.map(item =>
-                    item._id === productId
-                        ? { ...item, quantity: item.quantity + 1 }
+                prev.map(item =>
+                    item.sku_id === productId
+                        ? { ...item, quantity: item.quantity + 1 ,}
                         : item
                 );
+                return setTov_cors(!tov_to_corz)
             } else {
                 return [...prev, { _id: productId, quantity: 1 }];
             }
@@ -77,7 +80,6 @@ export default function AddToCart({ product }) {
                 console.log('Existing cart found:', cart);
             } catch (error) {
                 if (error.response?.status === 404 || error.response?.status === 500) {
-                    // Корзины нет или ошибка валидации, создаем новую через заказ
                     console.log('No cart found, creating new one via order...');
                     try {
                         cart = await createCartViaOrder();
@@ -86,7 +88,6 @@ export default function AddToCart({ product }) {
                     } catch (createError) {
                         console.error('Error creating cart:', createError);
                         
-                        // Если не удалось создать корзину, используем демо-режим
                         alert('Не удалось создать корзину. Используется демо-режим.');
                         return;
                     }
@@ -100,12 +101,12 @@ export default function AddToCart({ product }) {
                 sku_id: product.best_offer.sku_id,
                 quantity: quantity
             });
-            const pord_id = product.best_offer
-            console.log(pord_id)
             const cartt = await ordersAPI.getCart();
             const items = cartt.data.items
-            console.log(items)
-            addToCart(  items)
+            const cart_id = cartt.id
+            console.log(items, 'awefawefwaf')
+            addToCart(cart_id, items)
+            console.log(tov_to_corz, 'продукты в карзине')
             
             // Обновляем счетчик в заголовке
             window.dispatchEvent(new Event('cartUpdated'));
@@ -133,6 +134,8 @@ export default function AddToCart({ product }) {
     return (
         <div className="mt-4">
             <div className="flex items-center justify-between">
+                {tov_to_corz ? (
+                
                 <div className="flex items-center space-x-2">
                     <button
                         onClick={() => setQuantity(Math.max(1, quantity - 1))}
@@ -149,7 +152,7 @@ export default function AddToCart({ product }) {
                     >
                         +
                     </button>
-                </div>
+                </div>) : (
                 <button
                     onClick={handleAddToCart}
                     disabled={isLoading || !product.best_offer}
@@ -163,7 +166,7 @@ export default function AddToCart({ product }) {
                     ) : (
                         'В корзину'
                     )}
-                </button>
+                </button>)}
             </div>
             {!product.best_offer && (
                 <p className="text-xs text-red-500 mt-2">Нет в наличии</p>
