@@ -1,8 +1,7 @@
 import random
-from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from .database.models import Base, Products, ProductsStock, Merchants, \
-    Stocks  # замените your_module на имя вашего файла
+    Stocks
 from .database.core import get_db, engine
 
 Base.metadata.drop_all(bind=engine)

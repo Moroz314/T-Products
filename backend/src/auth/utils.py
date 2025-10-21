@@ -6,7 +6,7 @@ from fastapi.security import OAuth2PasswordBearer
 from typing import Optional
 from fastapi import HTTPException
 
-# Настройки
+
 SECRET_KEY = "830a106ea6a01b2449fcbfd7179990a8"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
@@ -53,7 +53,10 @@ def get_user_id_from_jwt(token: str = Depends(oauth2_scheme)):
         return int(user_id)
 
     except JWTError as e:
-        raise e
+        raise HTTPException(
+            status_code=403,
+            detail="signature has expired"
+        )
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
