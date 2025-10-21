@@ -59,19 +59,6 @@ def get_order_items(
 ) -> OrderItemsListResponse:
     return item_service.get_order_items(order_id)
 
-
-@orders_router.post(
-    "/orders",
-    response_model=OrderCreateResponse,
-    status_code=201,
-    summary="Создать заказ",
-    description="Создает новый заказ для текущего пользователя"
-)
-def create_order(
-    order_service: OrderService = Depends(get_order_service)
-) -> OrderCreateResponse:
-    return order_service.create_cart()
-
 @orders_router.get(
     "/orders/{order_id}",
     response_model=OrderDetailResponse,

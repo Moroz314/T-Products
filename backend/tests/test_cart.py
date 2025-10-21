@@ -2,10 +2,20 @@ import pytest
 
 
 class TestCart:
-    def test_get_cart_unauthorized(self, client):
+    def test_get_cart_unauthorized(self, client, auth_headers):
         """Тест получения корзины без авторизации"""
-        response = client.get("/cart")
-        assert response.status_code == 401
+        response = client.post("/cart", headers=auth_headers)
+        request_data = {
+            "address": "Дунайский пр",
+            "delivery_method": "pickup"
+        }
+        response = client.post("/order", json=request_data, headers=auth_headers)
+        assert response.status_code == 200
+        response = client.post("/cart", headers=auth_headers)
+        assert response.status_code == 200
+        response = client.get("/cart", headers=auth_headers)
+        data = response.json()
+        assert data['id'] == 2
 
     def test_create_cart_success(self, client, auth_headers):
         """Тест успешного создания корзины"""

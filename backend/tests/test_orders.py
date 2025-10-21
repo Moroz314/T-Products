@@ -3,14 +3,20 @@ import pytest
 
 class TestOrders:
     def test_create_order_success(self, client, auth_headers):
-        """Тест успешного создания заказа"""
-        response = client.post("/orders", headers=auth_headers)
-        assert response.status_code == 201
+        resp = client.post("/cart", headers=auth_headers)
+        assert resp.status_code == 200
+        request_data = {
+            "address": "Дунайский пр",
+            "delivery_method": "pickup"
+        }
+        response = client.post("/order", json=request_data, headers=auth_headers)
+        assert response.status_code == 200
         data = response.json()
-        assert data["status"] == "success"
-        assert "order_id" in data["data"]
-        assert "user_id" in data["data"]
-        assert "created_at" in data["data"]
+        assert data["status"] == "confirmed"
+        assert data["address"] == request_data["address"]
+        assert "id" in data
+        assert "user_id" in data
+        assert "created_at" in data
 
     def test_create_order_unauthorized(self, client):
         """Тест создания заказа без авторизации"""

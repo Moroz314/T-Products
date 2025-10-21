@@ -430,7 +430,6 @@ class OrderRepository(Repository):
                 user_id=user_id
             )
             self.session.add(order)
-            self.session.flush()
             self.session.commit()
 
             return order
