@@ -79,7 +79,7 @@ export const ordersAPI = {
   // ЭЛЕМЕНТЫ ЗАКАЗА
   getOrderItems: (orderId) => api.get(`/orders/${orderId}/items`),
   addOrderItem: (orderId, itemData) => api.post(`/orders/${orderId}/items`, itemData),
-  updateOrderItem: (itemId, quantity) => api.put(`/order-items/${itemId}`, { quantity }),
+ updateOrderItem: (itemId, quantity) => api.put(`/order-items/${itemId}`, { quantity: quantity }),
   deleteOrderItem: (itemId) => api.delete(`/order-items/${itemId}`),
 };
 

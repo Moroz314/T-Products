@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ordersAPI } from '../services/api';
 
@@ -6,45 +6,53 @@ export default function AddToCart({ product }) {
     const [isLoading, setIsLoading] = useState(false);
     const [quantity, setQuantity] = useState(1);
     const navigate = useNavigate();
-    const [shet, setShet] = useState(0)
-    const [tov_to_corz, setTov_cors] = useState(false)
+    const [isInCart, setIsInCart] = useState(false);
+    const [cartItemId, setCartItemId] = useState(null);
+    const [currentQuantity, setCurrentQuantity] = useState(0);
+    const [checkingCart, setCheckingCart] = useState(true);
 
-    // Функция для создания корзины через создание заказа
+    // Проверяем, есть ли товар в корзине при загрузке компонента
+    useEffect(() => {
+        checkIfInCart();
+    }, [product]);
 
-
-    const addToCart = (productId, prev) => {
-
-
-        const existingItem = prev.find(item => item.sku_id === productId);
-            if (existingItem) {
-                prev.map(item =>
-                    item.sku_id === productId
-                        ? { ...item, quantity: item.quantity + 1 ,}
-                        : item
-                );
-                return setTov_cors(!tov_to_corz)
-            } else {
-                return [...prev, { _id: productId, quantity: 1 }];
-            }
-    };
-
-
-
-
-    const createCartViaOrder = async () => {
+    // Функция для проверки наличия товара в корзине
+    const checkIfInCart = async () => {
         try {
-            console.log('Creating cart via order creation...');
-            const orderResponse = await ordersAPI.createOrder({
-                delivery_method: 'pickup' // или 'courier'
-            });
-            console.log('Cart created via order:', orderResponse.data);
-            return orderResponse.data.data;
+            setCheckingCart(true);
+            const token = localStorage.getItem('token');
+            if (!token) {
+                setCheckingCart(false);
+                return;
+            }
+
+            const cartResponse = await ordersAPI.getCart();
+            const cart = cartResponse.data.data || cartResponse.data;
+            
+            if (cart && cart.items) {
+                const existingItem = cart.items.find(item => 
+                    item.sku_id === product.best_offer.sku_id
+                );
+                
+                if (existingItem) {
+                    setIsInCart(true);
+                    setCartItemId(existingItem.id);
+                    setCurrentQuantity(existingItem.quantity);
+                } else {
+                    setIsInCart(false);
+                    setCartItemId(null);
+                    setCurrentQuantity(0);
+                }
+            }
         } catch (error) {
-            console.error('Error creating cart via order:', error);
-            throw error;
+            console.error('Error checking cart:', error);
+            setIsInCart(false);
+        } finally {
+            setCheckingCart(false);
         }
     };
 
+    // Функция для добавления товара в корзину
     const handleAddToCart = async () => {
         if (!product.best_offer) {
             alert('Нет доступных предложений для этого товара');
@@ -54,7 +62,6 @@ export default function AddToCart({ product }) {
         setIsLoading(true);
         
         try {
-            // Проверяем авторизацию
             const token = localStorage.getItem('token');
             if (!token) {
                 alert('Для добавления товаров в корзину необходимо войти в систему');
@@ -62,35 +69,18 @@ export default function AddToCart({ product }) {
                 return;
             }
 
-            console.log('Adding to cart:', {
-                product: product.name,
-                sku_id: product.best_offer.sku_id,
-                quantity: quantity
-            });
-
             let cart;
             let cartId;
             
             try {
-                // Пытаемся получить существующую корзину
                 const cartResponse = await ordersAPI.getCart();
-                cart = cartResponse.data;
-                console.log(cartResponse)
-                cartId = cart.id
-                console.log('Existing cart found:', cart);
+                cart = cartResponse.data.data || cartResponse.data;
+                cartId = cart.id;
             } catch (error) {
-                if (error.response?.status === 404 || error.response?.status === 500) {
-                    console.log('No cart found, creating new one via order...');
-                    try {
-                        cart = await createCartViaOrder();
-                        cartId = cart.order_id || cart.id;
-                        console.log('New cart created via order:', cart);
-                    } catch (createError) {
-                        console.error('Error creating cart:', createError);
-                        
-                        alert('Не удалось создать корзину. Используется демо-режим.');
-                        return;
-                    }
+                if (error.response?.status === 404) {
+                    const createResponse = await ordersAPI.createCart();
+                    cart = createResponse.data.data || createResponse.data;
+                    cartId = cart.id;
                 } else {
                     throw error;
                 }
@@ -101,12 +91,23 @@ export default function AddToCart({ product }) {
                 sku_id: product.best_offer.sku_id,
                 quantity: quantity
             });
-            const cartt = await ordersAPI.getCart();
-            const items = cartt.data.items
-            const cart_id = cartt.id
-            console.log(items, 'awefawefwaf')
-            addToCart(cart_id, items)
-            console.log(tov_to_corz, 'продукты в карзине')
+
+            // ВАЖНО: После добавления товара получаем обновленную корзину
+            // чтобы узнать cartItemId нового товара
+            const updatedCartResponse = await ordersAPI.getCart();
+            const updatedCart = updatedCartResponse.data.data || updatedCartResponse.data;
+            
+            if (updatedCart && updatedCart.items) {
+                const newItem = updatedCart.items.find(item => 
+                    item.sku_id === product.best_offer.sku_id
+                );
+                
+                if (newItem) {
+                    setIsInCart(true);
+                    setCartItemId(newItem.id);
+                    setCurrentQuantity(newItem.quantity);
+                }
+            }
             
             // Обновляем счетчик в заголовке
             window.dispatchEvent(new Event('cartUpdated'));
@@ -117,56 +118,142 @@ export default function AddToCart({ product }) {
             if (error.response?.status === 401) {
                 alert('Ошибка авторизации. Пожалуйста, войдите снова.');
                 localStorage.removeItem('token');
-                localStorage.removeItem('userData');
                 navigate('/login');
-            } else if (error.response?.status === 404) {
-                alert('Корзина не найдена. Пожалуйста, попробуйте снова.');
             } else {
-                alert('Ошибка при добавлении товара в корзину. Используется демо-режим.');
-                console.log("waefawef")
+                alert('Ошибка при добавлении товара в корзину');
             }
         } finally {
             setIsLoading(false);
         }
     };
 
- 
+// Функция для увеличения количества
+const handleIncrease = async () => {
+    if (!cartItemId) return;
+    
+    setIsLoading(true);
+    try {
+        const newQuantity = currentQuantity + 1;
+        // Передаем объект { quantity: число }
+        await ordersAPI.updateOrderItem(cartItemId, newQuantity);
+        setCurrentQuantity(newQuantity);
+        window.dispatchEvent(new Event('cartUpdated'));
+    } catch (error) {
+        console.error('Error increasing quantity:', error);
+        alert('Ошибка при обновлении количества');
+    } finally {
+        setIsLoading(false);
+    }
+};
+
+// Функция для уменьшения количества
+const handleDecrease = async () => {
+    if (!cartItemId) return;
+    
+    setIsLoading(true);
+    try {
+        const newQuantity = currentQuantity - 1;
+        
+        if (newQuantity === 0) {
+            await ordersAPI.deleteOrderItem(cartItemId);
+            setIsInCart(false);
+            setCartItemId(null);
+            setCurrentQuantity(0);
+        } else {
+            // Передаем объект { quantity: число }
+            await ordersAPI.updateOrderItem(cartItemId, newQuantity);
+            setCurrentQuantity(newQuantity);
+        }
+        
+        window.dispatchEvent(new Event('cartUpdated'));
+    } catch (error) {
+        console.error('Error decreasing quantity:', error);
+        alert('Ошибка при обновлении количества');
+    } finally {
+        setIsLoading(false);
+    }
+};
+
+    // Функция для удаления товара из корзины
+    const handleRemoveFromCart = async () => {
+        if (!cartItemId) return;
+        
+        setIsLoading(true);
+        try {
+            await ordersAPI.deleteOrderItem(cartItemId);
+            setIsInCart(false);
+            setCartItemId(null);
+            setCurrentQuantity(0);
+            window.dispatchEvent(new Event('cartUpdated'));
+        } catch (error) {
+            console.error('Error removing from cart:', error);
+            alert('Ошибка при удалении товара из корзины');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Показываем loader пока проверяем корзину
+    if (checkingCart) {
+        return (
+            <div className="mt-4">
+                <div className="flex justify-center">
+                    <div className="w-6 h-6 border-2 border-gray-300 border-t-yellow-400 rounded-full animate-spin"></div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="mt-4">
             <div className="flex items-center justify-between">
-                {tov_to_corz ? (
-                
-                <div className="flex items-center space-x-2">
-                    <button
-                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                        disabled={isLoading || quantity <= 1}
-                        className="w-8 h-8 text-black bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        -
-                    </button>
-                    <span className="w-8 text-center font-medium">{quantity}</span>
-                    <button
-                        onClick={() => setQuantity(quantity + 1)}
-                        disabled={isLoading}
-                        className="w-8 h-8 text-black bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors disabled:opacity-50"
-                    >
-                        +
-                    </button>
-                </div>) : (
-                <button
-                    onClick={handleAddToCart}
-                    disabled={isLoading || !product.best_offer}
-                    className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold py-2 px-4 rounded-lg transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center space-x-2"
-                >
-                    {isLoading ? (
-                        <>
-                            <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                            <span>Добавляем...</span>
-                        </>
-                    ) : (
-                        'В корзину'
-                    )}
-                </button>)}
+                {isInCart ? (
+                    <div className="flex items-center space-x-3">
+                        <div className="flex items-center space-x-2 bg-gray-100 rounded-full px-3 py-1">
+                            <button
+                                onClick={handleDecrease}
+                                disabled={isLoading}
+                                className="w-6 h-6 text-black bg-white rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-bold"
+                            >
+                                -
+                            </button>
+                            <span className="w-8 text-center font-medium text-sm text-black">
+                                {isLoading ? '...' : currentQuantity}
+                            </span>
+                            <button
+                                onClick={handleIncrease}
+                                disabled={isLoading}
+                                className="w-6 h-6 text-black bg-white rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors disabled:opacity-50 text-sm font-bold"
+                            >
+                                +
+                            </button>
+                        </div>
+                        <button
+                            onClick={handleRemoveFromCart}
+                            disabled={isLoading}
+                            className="text-red-500 hover:text-red-700 text-sm font-medium transition-colors disabled:opacity-50"
+                        >
+                            Удалить
+                        </button>
+                    </div>
+                ) : (
+                    <div className="flex items-center space-x-3">
+                        <button
+                            onClick={handleAddToCart}
+                            disabled={isLoading || !product.best_offer}
+                            className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold py-2 px-4 rounded-lg transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center space-x-2"
+                        >
+                            {isLoading ? (
+                                <>
+                                    <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                                    <span>Добавляем...</span>
+                                </>
+                            ) : (
+                                'В корзину'
+                            )}
+                        </button>
+                    </div>
+                )}
             </div>
             {!product.best_offer && (
                 <p className="text-xs text-red-500 mt-2">Нет в наличии</p>

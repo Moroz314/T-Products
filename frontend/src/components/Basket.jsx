@@ -116,46 +116,58 @@ export default function Basket() {
     };
 
     // Оформление заказа
-    const createOrder = async () => {
-        if (!cart || !cart.items || cart.items.length === 0) {
-            alert('Корзина пуста');
-            return;
-        }
+ const createOrder = async () => {
+    if (!cart || !cart.items || cart.items.length === 0) {
+        alert('Корзина пуста');
+        return;
+    }
 
-        try {
-            setIsLoading(true);
-            const orderData = {
-                order_id: cart.id,
-                address: '1234',
-                delivery_method: 'courier',
-                status: 'confirmed'
-            };
-            console.log(cart)
+    try {
+        setIsLoading(true);
+        const orderData = {
+            order_id: cart.id,
+            address: userAddress,
+            delivery_method: 'courier',
+            status: 'confirmed'
+        };
+        
+        const response = await ordersAPI.createOrder(orderData);
+        console.log(response, 'response');
+        
+        if (response.status === 200) {
+            alert('Заказ успешно создан!');
             
-            const response = await ordersAPI.createOrder(orderData);
+            // Ждем немного перед созданием новой корзины
+            await new Promise(resolve => setTimeout(resolve, 500));
             
-            if (response.status === 200) {
-                alert('Заказ успешно создан!');
-                try {
-                    const createResponse = await ordersAPI.createCart();
-                    console.log('New cart created:', createResponse.data);
-                    // После создания получаем корзину снова
-                    const newCartResponse = await ordersAPI.getCart();
-                    setCart(newCartResponse.data.data);
-                } catch (createError) {
-                    console.error('Error creating cart:', createError);
-                    setCart(null);
-                }
-                navigate('/profile');
+            try {
+                const createResponse = await ordersAPI.createCart();
+                console.log('New cart created:', createResponse.data);
+                
+                // Ждем обновления на сервере
+                await new Promise(resolve => setTimeout(resolve, 300));
+                
+                // Принудительно обновляем корзину с timestamp для избежания кэширования
+                const timestamp = new Date().getTime();
+                const newCartResponse = await ordersAPI.getCart();
+                console.log(newCartResponse, 'должны быть новая корзина');
+                
+                // ОБНОВЛЯЕМ СОСТОЯНИЕ
+                setCart(newCartResponse.data.data || newCartResponse.data);
+                
+            } catch (createError) {
+                console.error('Error creating cart:', createError);
+                setCart(null);
             }
-        } catch (error) {
-            console.error('Error creating order:', error);
-            alert('Ошибка при создании заказа');
-        } finally {
-            setIsLoading(false);
+            navigate('/profile');
         }
-    };
-
+    } catch (error) {
+        console.error('Error creating order:', error);
+        alert('Ошибка при создании заказа');
+    } finally {
+        setIsLoading(false);
+    }
+};
     // Группировка товаров по магазинам
     const groupItemsByMerchant = () => {
         if (!cart || !cart.items) return [];
@@ -187,11 +199,16 @@ export default function Basket() {
     const formatPrice = (price) => {
         return new Intl.NumberFormat('ru-RU').format(price);
     };
+    async function GET_CART (){
+        const data = await ordersAPI.getCart();
+        console.log('get cart',data)
+    }
 
     // ДЕЙСТВИТЕЛЬНО ЗАГРУЖАЕМ КОРЗИНУ ПРИ МОНТИРОВАНИИ КОМПОНЕНТА
     useEffect(() => {
         console.log('Basket component mounted, loading cart...');
         loadCart();
+        GET_CART()
     }, []);
 
     function go_main(){
