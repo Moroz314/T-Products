@@ -106,7 +106,6 @@ class OrderCreateData(BaseModel):
 class OrderCreateInfo(BaseModel):
     address: str = None
     delivery_method: DeliveryMethod
-    status: str
 
 class OrderCreateResponse(SuccessResponse):
     data: OrderCreateData
