@@ -269,14 +269,14 @@ class OrderService:
 
     def get_cart(self) -> CartResponse:
         try:
-            orders, total_count = self.order_repo.get_user_orders(self.user_id)
-            if not orders:
+            cart = self.order_repo.get_cart(self.user_id)
+            if not cart:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Корзина не найдена"
                 )
 
-            cart_data = self._format_cart_response(orders[0])
+            cart_data = self._format_cart_response(cart)
 
             return cart_data
 
