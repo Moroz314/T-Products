@@ -2,20 +2,11 @@ import pytest
 
 
 class TestCart:
-    def test_get_cart_unauthorized(self, client, auth_headers):
+    def test_get_cart_unauthorized(self, client):
         """Тест получения корзины без авторизации"""
-        response = client.post("/cart", headers=auth_headers)
-        request_data = {
-            "address": "Дунайский пр",
-            "delivery_method": "pickup"
-        }
-        response = client.post("/order", json=request_data, headers=auth_headers)
-        assert response.status_code == 200
-        response = client.post("/cart", headers=auth_headers)
-        assert response.status_code == 200
-        response = client.get("/cart", headers=auth_headers)
-        data = response.json()
-        assert data['id'] == 2
+        response = client.post("/cart",)
+        assert response.status_code == 401
+
 
     def test_create_cart_success(self, client, auth_headers):
         """Тест успешного создания корзины"""
@@ -87,17 +78,15 @@ class TestCart:
                 )
                 assert delete_response.status_code == 200
 
-    def test_create_order_from_cart(self, client, auth_headers, cart_order):
-        """Тест оформления заказа из корзины"""
-        order_id = cart_order["data"]["order_id"]
+    def test_create_order_from_cart(self, client, auth_headers):
+        order_response = client.post("/cart", headers=auth_headers) # создаём корзину
+        assert order_response.status_code == 200
 
         order_info = {
-            "order_id": order_id,
-            "address": "Test Address 123",
+            "address": "Гражданский",
             "delivery_method": "courier",
-            "status": "confirmed"
         }
-
+        # оформляем заказ
         response = client.post(
             "/order",
             headers=auth_headers,
@@ -109,3 +98,10 @@ class TestCart:
         assert "id" in data
         assert data["address"] == order_info["address"]
         assert data["delivery_method"] == order_info["delivery_method"]
+
+        # проверяем, что у пользователя нет корзины
+        response = client.get(
+            "/cart",
+            headers=auth_headers,
+        )
+        assert response.status_code == 404

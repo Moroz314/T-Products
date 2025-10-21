@@ -210,6 +210,14 @@ class OrderService:
             )
 
     def create_cart(self) -> OrderCreateResponse:
+        cart = self.order_repo.get_cart(self.user_id)
+
+        if cart:
+            raise HTTPException(
+                detail="Cart already exists",
+                status_code=status.HTTP_409_CONFLICT
+            )
+
         try:
             # Создаем заказ
             order = self.order_repo.create_cart(self.user_id)

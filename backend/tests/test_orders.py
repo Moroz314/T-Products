@@ -23,11 +23,10 @@ class TestOrders:
         response = client.post("/orders")
         assert response.status_code == 401
 
-    def test_add_item_to_order_success(self, client, auth_headers):
+    def test_add_item_to_order_success(self, client, auth_headers, cart_order):
         """Тест добавления товара в заказ"""
         # Сначала создаем заказ
-        order_response = client.post("/orders", headers=auth_headers)
-        order_id = order_response.json()["data"]["order_id"]
+        order_id = cart_order["data"]["order_id"]
 
         # Добавляем товар
         item_data = {"sku_id": 1, "quantity": 2}
@@ -53,6 +52,7 @@ class TestOrders:
     def test_get_order_items_success(self, client, auth_headers):
         """Тест получения товаров заказа"""
         # Создаем заказ
+
         order_response = client.post("/orders", headers=auth_headers)
         order_id = order_response.json()["data"]["order_id"]
 
@@ -68,7 +68,7 @@ class TestOrders:
     def test_update_order_item_quantity(self, client, auth_headers):
         """Тест обновления количества товара"""
         # Создаем заказ и добавляем товар
-        order_response = client.post("/orders", headers=auth_headers)
+        order_response = client.post("/cart", headers=auth_headers)
         order_id = order_response.json()["data"]["order_id"]
 
         item_response = client.post(
