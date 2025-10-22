@@ -6,12 +6,14 @@ import { ordersAPI } from '../../services/api';
 export default function Head({ onSearch }) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [cartItemsCount, setCartItemsCount] = useState(0);
-    const [userMap, setUserMap] = useState('Свердловская набережная, 44с2');
+    const [userMap, setUserMap] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [userName, setUserName] = useState('');
 
     useEffect(() => {
+         const location = localStorage.getItem('location_order');
+        setUserMap(location || '');
         checkAuthStatus();
         loadCartCount();
     }, []);

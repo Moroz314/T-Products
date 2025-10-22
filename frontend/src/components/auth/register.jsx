@@ -89,7 +89,7 @@ export default function Register() {
                 }
 
                 // 3. Переходим на главную страницу
-                navigate('/');
+                navigate('/map');
                 
             } else {
                 alert('Регистрация прошла успешно, но не получен токен доступа');

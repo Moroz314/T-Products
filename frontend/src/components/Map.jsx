@@ -118,6 +118,7 @@ export default function Map() {
 
 
     const handleSubmit = () => {
+        localStorage.setItem('location_order', address);
         // TODO: Update the location to the server
         navigate("/");
     };

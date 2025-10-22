@@ -106,6 +106,27 @@ export default function Main() {
         navigate(`/product` , product);
 };
 
+const useFoodImages = () => {
+    const foodImages = [
+    "https://foodish-api.com/images/burger/burger1.jpg",
+    "https://foodish-api.com/images/pizza/pizza1.jpg",
+    "https://foodish-api.com/images/pasta/pasta1.jpg", 
+    "https://foodish-api.com/images/biryani/biryani60.jpg",
+    "https://foodish-api.com/images/dosa/dosa49.jpg",
+    "https://foodish-api.com/images/dessert/dessert1.jpg",
+    'https://foodish-api.com/images/pizza/pizza55.jpg',
+    'https://foodish-api.com/images/pizza/pizza55.jpg'
+];
+
+    const getRandomFoodImage = (seed) => {
+        // Используем EAN или индекс как seed для постоянства картинки
+        const seedValue = seed ? String(seed).split('').reduce((a, b) => a + b.charCodeAt(0), 0) : 0;
+        const randomIndex = (seedValue % foodImages.length);
+        return foodImages[randomIndex];
+    };
+
+    return { getRandomFoodImage };
+};
     // Рендер продуктов с улучшенной отладкой
     const renderProducts = () => {
         console.log('Rendering products, count:', products?.length);
@@ -157,69 +178,74 @@ export default function Main() {
             );
         }
 
-        return products.map((product, index) => {
-            console.log('Rendering product:', product);
-            return (
-                <div
-                    key={product.ean || `product-${index}`}
-                    className="group bg-white rounded-2xl shadow-xs hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-yellow-200 transform hover:-translate-y-1"
-                >
-                    <div className="relative overflow-hidden">
-                        <img
-                            className="w-full h-60 object-cover transition-transform duration-500 group-hover:scale-105 cursor-pointer"
-                            src={product.image_url || "https://imageproxy.wolt.com/products/80bd1fc0-7efd-4ad0-9ed0-4fdfd6c05a71.jpg"}
-                            alt={product.name}
-                            onClick={() => navigateToProduct(product)}
-                            onError={(e) => {
-                                e.target.src = "https://via.placeholder.com/300x200?text=No+Image";
-                            }}
-                        />
-                        {product.best_offer && (
-                            <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-full px-2 py-1 flex items-center space-x-1">
-                                <svg className="w-3 h-3 fill-current text-amber-700" viewBox="0 0 20 20">
-                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                </svg>
-                                <span className="text-xs font-bold text-gray-800">
-                                    4.5
-                                </span>
-                            </div>
-                        )}
-                    </div>
+        const { getRandomFoodImage } = useFoodImages();
 
-                    <div className="p-5">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                            <div>
-                                <span className="text-2xl font-bold text-black">
-                                    от {product.min_price || product.price} ₽
-                                </span>
-                                {product.max_price > product.min_price && (
-                                    <span className="text-sm text-gray-500 block">
-                                        до {product.max_price} ₽
-                                    </span>
-                                )}
-                            </div>
-                            <div className="">
-                                <h3 className="font-bold text-lg text-black mb-2 line-clamp-2 group-hover:text-yellow-600 transition-colors cursor-pointer"
-                                    onClick={() => navigateToProduct(product.ean)}>
-                                    {product.name || 'Без названия'}
-                                </h3>
-                                <p className="text-xs text-gray-400 block">
-                                    магазин: {product.best_offer.merchant_name || 'Без категории'}
-                                </p>
-                                <p className="text-xs text-gray-400 block">
-                                    категория: {product.category || 'Без категории'}
-                                </p>
-                                <p className="text-xs text-gray-500 mt-1">
-                                    {product.offers_count || product.offers?.length || 0} предложений
-                                </p>
-                            </div>
+    return products.map((product, index) => {
+        const imageUrl = product.image_url 
+            ? product.image_url 
+            : getRandomFoodImage(product.ean || index);
+
+        return (
+            <div
+                key={product.ean || `product-${index}`}
+                className="group bg-white rounded-2xl shadow-xs hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-yellow-200 transform hover:-translate-y-1"
+            >
+                <div className="relative overflow-hidden">
+                    <img
+                        className="w-full h-60 object-cover transition-transform duration-500 group-hover:scale-105 cursor-pointer"
+                        src={imageUrl}
+                        alt={product.name}
+                        onClick={() => navigateToProduct(product)}
+                        onError={(e) => {
+                            e.target.src = "https://via.placeholder.com/300x200/FFD700/000000?text=Вкусная+Еда";
+                        }}
+                    />
+                    {product.best_offer && (
+                        <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-full px-2 py-1 flex items-center space-x-1">
+                            <svg className="w-3 h-3 fill-current text-amber-700" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            <span className="text-xs font-bold text-gray-800">
+                                4.5
+                            </span>
                         </div>
-                        <AddToCart product={product} />
-                    </div>
+                    )}
                 </div>
-            );
-        });
-    };
+
+                <div className="p-5">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        <div>
+                            <span className="text-2xl font-bold text-black">
+                                от {product.min_price || product.price} ₽
+                            </span>
+                            {product.max_price > product.min_price && (
+                                <span className="text-sm text-gray-500 block">
+                                    до {product.max_price} ₽
+                                </span>
+                            )}
+                        </div>
+                        <div className="">
+                            <h3 className="font-bold text-lg text-black mb-2 line-clamp-2 group-hover:text-yellow-600 transition-colors cursor-pointer"
+                                onClick={() => navigateToProduct(product.ean)}>
+                                {product.name || 'Без названия'}
+                            </h3>
+                            <p className="text-xs text-gray-400 block">
+                                магазин: {product.best_offer.merchant_name || 'Без категории'}
+                            </p>
+                            <p className="text-xs text-gray-400 block">
+                                категория: {product.category || 'Без категории'}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">
+                                {product.offers_count || product.offers?.length || 0} предложений
+                            </p>
+                        </div>
+                    </div>
+                    <AddToCart product={product} />
+                </div>
+            </div>
+        );
+    });
+};
 
     return (
         <div className='bg-white min-h-screen'>

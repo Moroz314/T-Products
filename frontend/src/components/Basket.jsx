@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Head from './ui/Head';
 import { IoMdArrowRoundBack, IoMdPin, IoMdCart, IoMdAdd, IoMdRemove, IoMdTrash } from "react-icons/io";
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ordersAPI } from '../services/api';
 
 export default function Basket() {
@@ -9,7 +9,7 @@ export default function Basket() {
     const [cart, setCart] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isUpdating, setIsUpdating] = useState(false);
-    const [userAddress, setUserAddress] = useState("ул. Пушкина, 10, кв. 25");
+    const [userAddress, setUserAddress] = useState("");
     const [orderItems, setOrderItems] = useState([])
 
     // Загрузка корзины с API
@@ -18,6 +18,8 @@ export default function Basket() {
         
         setIsLoading(true);
         const token = localStorage.getItem('token');
+        const location = localStorage.getItem('location_order');
+        setUserAddress(location || '');
         
         if (!token) {
             console.log('User not authenticated');
@@ -91,7 +93,7 @@ export default function Basket() {
         
         try {
             setIsUpdating(true);
-            await ordersAPI.updateOrderItem(itemId, { quantity: newQuantity });
+            await ordersAPI.updateOrderItem(itemId, newQuantity);
             await loadCart();
         } catch (error) {
             console.error('Error updating quantity:', error);
@@ -304,9 +306,9 @@ export default function Basket() {
                                         <p className="font-semibold text-gray-900">{userAddress}</p>
                                     </div>
                                 </div>
-                                <button className="bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white px-4 py-2 rounded-xl font-medium transition-colors shadow-md transform hover:scale-[1.02] active:scale-[0.98]">
+                                <Link to='/map'> <button className="bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white px-4 py-2 rounded-xl font-medium transition-colors shadow-md transform hover:scale-[1.02] active:scale-[0.98]">
                                     Изменить 
-                                </button>
+                                </button></Link>
                             </div>
                         </div>
 
