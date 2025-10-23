@@ -488,7 +488,7 @@ class OrderRepository(Repository):
                 .joinedload(OrderItem.product_stock)
                 .joinedload(ProductsStock.product)
             )
-            .filter(Orders.user_id == user_id)
+            .filter(and_(Orders.user_id == user_id, Orders.status == "confirmed"))
             .order_by(Orders.created_at.desc())
         )
 

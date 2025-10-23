@@ -59,7 +59,7 @@ class OrderResponse(BaseModel):
     id: int
     user_id: int
     created_at: datetime
-    delivery_method: str
+    delivery_method: DeliveryMethod
     address: str
     status: OrderStatus
     items: List[OrderItemResponse]
