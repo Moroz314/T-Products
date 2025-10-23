@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { IoMail, IoLockClosed, IoPerson, IoArrowForward } from "react-icons/io5";
+import { IoMail, IoLockClosed, IoPerson, IoArrowForward, IoCall } from "react-icons/io5";
 import Head from '../ui/Head';
 import { IoMdArrowRoundBack} from "react-icons/io";
 import { authAPI, ordersAPI } from '../../services/api';
@@ -9,6 +9,7 @@ export default function Register() {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
         username: '',
+        phone: '',
         email: '',
         password: ''
     });
@@ -22,9 +23,9 @@ export default function Register() {
     };
 
     const HandlerSubmit = async () => {
-        const { username, email, password } = formData;
+        const { username, phone, email, password } = formData;
 
-        if (!username || !email || !password) {
+        if (!username || !phone || !email || !password) {
             alert('Пожалуйста, заполните все поля');
             return;
         }
@@ -34,10 +35,18 @@ export default function Register() {
             return;
         }
 
+        // Валидация телефона (базовая проверка)
+        const phoneRegex = /^[\+]?[0-9\s\-\(\)]{10,}$/;
+        if (!phoneRegex.test(phone)) {
+            alert('Пожалуйста, введите корректный номер телефона');
+            return;
+        }
+
         setIsLoading(true);
 
         const userData = {
             username,
+            phone,
             email,
             password
         };
@@ -57,7 +66,8 @@ export default function Register() {
                 localStorage.setItem('userData', JSON.stringify({
                     user_id: userId,
                     username: username,
-                    email: email
+                    email: email,
+                    phone: phone
                 }));
 
                 // 2. Создаем корзину для нового пользователя с токеном
@@ -113,6 +123,29 @@ export default function Register() {
         }
     };
 
+    // Функция для форматирования номера телефона
+    const formatPhone = (value) => {
+        // Удаляем все нецифровые символы
+        const numbers = value.replace(/\D/g, '');
+        
+        // Форматируем номер в формате +7 (XXX) XXX-XX-XX
+        if (numbers.length === 0) return '';
+        if (numbers.length <= 1) return `+${numbers}`;
+        if (numbers.length <= 4) return `+${numbers.slice(0,1)} (${numbers.slice(1)}`;
+        if (numbers.length <= 7) return `+${numbers.slice(0,1)} (${numbers.slice(1,4)}) ${numbers.slice(4)}`;
+        if (numbers.length <= 9) return `+${numbers.slice(0,1)} (${numbers.slice(1,4)}) ${numbers.slice(4,7)}-${numbers.slice(7)}`;
+        return `+${numbers.slice(0,1)} (${numbers.slice(1,4)}) ${numbers.slice(4,7)}-${numbers.slice(7,9)}-${numbers.slice(9,11)}`;
+    };
+
+    const handlePhoneChange = (value) => {
+        // Сохраняем только цифры в состоянии, а отображаем форматированный номер
+        const numbers = value.replace(/\D/g, '');
+        setFormData(prev => ({
+            ...prev,
+            phone: numbers
+        }));
+    };
+
     function go_main(){
         navigate('/');
     }
@@ -152,6 +185,28 @@ export default function Register() {
                                          bg-amber-50 focus:ring-2 focus:ring-amber-500 focus:border-amber-500
                                          transition-colors placeholder-gray-400"
                                 placeholder="Введите ваше имя"
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Телефон
+                        </label>
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <IoCall className="h-5 w-5 text-amber-500" />
+                            </div>
+                            <input
+                                type="tel"
+                                value={formatPhone(formData.phone)}
+                                onChange={(e) => handlePhoneChange(e.target.value)}
+                                onKeyPress={handleKeyPress}
+                                className="text-black block w-full pl-10 pr-4 py-3 border border-amber-200 rounded-xl
+                                         bg-amber-50 focus:ring-2 focus:ring-amber-500 focus:border-amber-500
+                                         transition-colors placeholder-gray-400"
+                                placeholder="+7 (999) 999-99-99"
+                                maxLength="18"
                             />
                         </div>
                     </div>

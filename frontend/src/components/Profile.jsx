@@ -70,6 +70,7 @@ const Profile = () => {
     try {
       const storedUserData = localStorage.getItem('userData');
       const token = localStorage.getItem('token');
+      const location = localStorage.getItem('location_order');
       
       if (storedUserData && token) {
         const user = JSON.parse(storedUserData);
@@ -77,7 +78,7 @@ const Profile = () => {
           name: user.username || user.email?.split('@')[0] || 'Пользователь',
           email: user.email || 'email@example.com',
           phone: user.phone || '+7 (999) 123-45-67',
-          address: user.address || 'г. Москва, ул. Примерная, д. 1, кв. 5'
+          address: location || 'г. Москва, ул. Примерная, д. 1, кв. 5'
         });
       } else {
         // Если нет данных, перенаправляем на логин
@@ -99,11 +100,12 @@ const Profile = () => {
         offset: 0
       });
       
-      console.log('Orders API response:', response);
+      console.log('Orders API response:', response.data);
 
-      if (response.status === 200 && response.data.orders) {
+      if (response.data.status === "success" && response.data.data.orders) {
         // Нормализуем данные каждого заказа
-        const normalizedOrders = response.data.orders.map(normalizeOrderData);
+        const normalizedOrders = response.data.data.orders.map(normalizeOrderData);
+        console.log(normalizedOrders)
         setOrders(normalizedOrders);
       } else {
         // Используем демо-данные если ответ не содержит заказов

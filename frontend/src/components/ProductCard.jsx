@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { IoMdArrowRoundBack } from "react-icons/io";
 import { FaTruckFast, FaDollarSign, FaFire } from 'react-icons/fa6';
 import AddToCart from './AddToCart.jsx';
@@ -91,42 +91,48 @@ const ProducersList = ({ producers, chosenMerchant, setChosenMerchant }) => {
     );
 };
 
-const ProductCard = ({ onClose }) => {
+const ProductCard = () => {
     const navigate = useNavigate();
+    const location = useLocation(); // ✅ Добавляем useLocation
     
-    // Данные продукта (в реальном приложении будут приходить из props или API)
-    const productData = {
-        title: "Название продукта",
-        about: "Краткое описание продукта, его особенности и состав.",
-        mass: 500,
-        calories: 250,
-        fats: 15,
-        proteins: 20,
-        carbohydrates: 10,
-        imageUrl: "https://imageproxy.wolt.com/products/80bd1fc0-7efd-4ad0-9ed0-4fdfd6c05a71.jpg",
-        producers: [
-            { name: "Производитель 1", price: 1250, deliveryMinutes: 5 },
-            { name: "Производитель 2", price: 1300, deliveryMinutes: 10 },
-            { name: "Другой производитель", price: 1150, deliveryMinutes: 10 },
-        ]
-    };
+    // Получаем данные из state навигации
+    const productData = location.state?.product;
+    console.log(productData.img, 'productData')
 
-    const [chosenMerchant, setChosenMerchant] = useState(productData.producers?.[0]?.name || null);
+    if (!productData) {
+        return (
+            <div className="fixed inset-0 flex items-center justify-center bg-white">
+                <div className="text-center">
+                    <h2 className="text-2xl font-bold text-gray-600 mb-4">Товар не найден</h2>
+                    <button 
+                        onClick={() => navigate(-1)}
+                        className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold py-2 px-4 rounded-lg"
+                    >
+                        Вернуться назад
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
-    // Создаем объект product для передачи в AddToCart
-    const selectedProducer = productData.producers.find(p => p.name === chosenMerchant);
+    const [chosenMerchant, setChosenMerchant] = useState(
+        productData.producers?.[0]?.name || null
+    );
+
+    // Создаем объект product для AddToCart
+    const selectedProducer = productData.producers?.find(p => p.name === chosenMerchant);
     
     const product = {
         name: productData.title,
-        ean: "1234567890123", // пример EAN
+        ean: productData.ean || "1234567890123",
         best_offer: selectedProducer ? {
-            sku_id: Date.now(), // временный ID, в реальном приложении должен быть с бэкенда
+            sku_id: Date.now(),
             price: selectedProducer.price,
             merchant_name: selectedProducer.name,
             delivery_minutes: selectedProducer.deliveryMinutes
         } : null,
-        category: "Продукты",
-        image_url: productData.imageUrl
+        category: productData.category || "Продукты",
+        image_url: productData.img
     };
 
     return (
@@ -143,7 +149,7 @@ const ProductCard = ({ onClose }) => {
                 <div className="md:flex h-full">
                     {/* Изображение продукта */}
                     <ProductImage 
-                        imageUrl={productData.imageUrl} 
+                        imageUrl={productData.img} 
                         title={productData.title} 
                     />
                     
@@ -182,7 +188,7 @@ const ProductCard = ({ onClose }) => {
                         )}
                         
                         {/* Компонент добавления в корзину */}
-                        <AddToCart product={product} />
+                        <AddToCart product={productData} />
                     </div>
                 </div>
             </div>
